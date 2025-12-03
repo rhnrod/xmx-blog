@@ -1,4 +1,4 @@
-<form method="POST" action="{{ route('post.like', $postId) }}" class="h-5 max-h-5 min-h-5">
+<form method="POST" action="{{ route('post.dislike', $postId) }}" class="h-5 max-h-5 min-h-5">
     @csrf
     <button type="submit"
         class="font-medium hover:text-red-700 hover:dark:text-red-200 cursor-pointer inline-flex items-center justify-center mr-2 {{ session("post_vote_$postId")=='dislike' ? 'text-red-700 dark:text-red-200' : '' }}">
