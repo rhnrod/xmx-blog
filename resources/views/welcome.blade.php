@@ -6,7 +6,7 @@
             <div class="lg:col-span-2 space-y-10">
                 <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-6 border-b pb-2 dark:border-gray-700">Posts Recentes</h1>
 
-                <!-- @foreach ($posts['posts'] as $post) -->
+                <!-- @foreach ($posts as $post) -->
                 <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-[1.01] dark:bg-gray-800 dark:shadow-gray-700/50">
                     
                     <!-- Título do Post -->
@@ -86,6 +86,9 @@
                     </div>
                 </div>
             </aside>
+        </div>
+        <div>
+            {{ $posts->links() }}
         </div>
     </x-slot>
 </x-layout>

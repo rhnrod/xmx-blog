@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class PostController extends Controller
 {
@@ -12,8 +13,35 @@ class PostController extends Controller
      */
     public function posts()
     {
-        $posts = Http::get('https://dummyjson.com/posts')->json();
-        return view('welcome', compact('posts'));
+        $page = request()->get('page', 1);
+
+        $limit = 10; 
+        $skip = ($page - 1) * $limit;
+
+        // Chamada à API
+        $response = Http::get("https://dummyjson.com/posts", [
+            'limit' => $limit,
+            'skip'  => $skip,
+        ])->json();
+
+        $posts = $response['posts'];
+        $total = $response['total']; // dummyjson retorna o total real
+
+        // Criar paginação igual ao Laravel
+        $paginator = new LengthAwarePaginator(
+            $posts,
+            $total, 
+            $limit,  
+            $page,    
+            [
+                'path' => url('/'), // mantém rota /
+                'query' => request()->query(), // mantém parâmetros da URL
+            ]
+        );
+
+        return view('welcome', [
+            'posts' => $paginator
+        ]);
     }
 
     /**
