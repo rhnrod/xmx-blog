@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use App\Models\Post;
 use App\Models\User;
+use App\Models\Comment;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Pagination\LengthAwarePaginator;
+
 
 class PostController extends Controller
 {
@@ -23,28 +26,25 @@ class PostController extends Controller
             'limit' => $limit,
             'skip'  => $skip
         ])->json();
-        
 
         $totalApi = $response['total'];
 
         foreach ($response['posts'] as $p) {
-
             $localUser = User::find($p['userId']);
 
-            if (!$localUser || !$localUser->firstName || !$localUser->lastName) {
-
+            if (!$localUser || !$localUser->firstName) {
                 $apiUser = Http::get("https://dummyjson.com/users/{$p['userId']}")->json();
 
                 User::updateOrCreate(
                     ['id' => $apiUser['id']],
                     [
-                        'firstName' => $apiUser['firstName'] ?? $localUser->firstName ?? null,
-                        'lastName'  => $apiUser['lastName']  ?? $localUser->lastName  ?? null,
-                        'email'     => $apiUser['email']     ?? $localUser->email     ?? null,
-                        'phone'     => $apiUser['phone']     ?? $localUser->phone     ?? null,
-                        'image'     => $apiUser['image']     ?? $localUser->image     ?? null,
-                        'birth_date'=> $apiUser['birthDate'] ?? $localUser->birth_date ?? null,
-                        'address'   => json_encode($apiUser['address'] ?? $localUser->address),
+                        'firstName' => $apiUser['firstName'] ?? null,
+                        'lastName'  => $apiUser['lastName']  ?? null,
+                        'email'     => $apiUser['email']     ?? null,
+                        'phone'     => $apiUser['phone']     ?? null,
+                        'image'     => $apiUser['image']     ?? null,
+                        'birth_date'=> $apiUser['birthDate'] ?? null,
+                        'address'   => json_encode($apiUser['address'])
                     ]
                 );
             }
@@ -61,20 +61,44 @@ class PostController extends Controller
                     'user_id'  => $p['userId'],
                 ]
             );
+
+            $comments = Http::get("https://dummyjson.com/comments/post/{$p['id']}")->json()['comments'];
+
+            foreach ($comments as $c) {
+
+                $commentUser = Http::get("https://dummyjson.com/users/{$c['user']['id']}")->json();
+
+                User::updateOrCreate(
+                    ['id' => $commentUser['id']],
+                    [
+                        'firstName' => $commentUser['firstName'] ?? null,
+                        'lastName'  => $commentUser['lastName']  ?? null,
+                        'email'     => $commentUser['email']     ?? null,
+                        'phone'     => $commentUser['phone']     ?? null,
+                        'image'     => $commentUser['image']     ?? null,
+                        'birth_date'=> $commentUser['birthDate'] ?? null,
+                        'address'   => json_encode($commentUser['address'])
+                    ]
+                );
+
+                /** Salvar comentário */
+                Comment::updateOrCreate(
+                    ['id' => $c['id']], // se existir não duplica
+                    [
+                        'body'    => $c['body'],
+                        'likes'   => $c['likes'] ?? 0,
+                        'post_id' => $p['id'],
+                        'user_id' => $c['user']['id'],
+                    ]
+                );
+            }
         }
 
-        /** 2) Puxar só o que precisa do banco */
-        $posts = Post::with('user')
+        $posts = Post::with(['user', 'comments.user'])
             ->skip($skip)
             ->take($limit)
             ->get();
-        
-        foreach ($posts as $post) {
-            $comments = Http::get("https://dummyjson.com/comments/post/{$post->id}?limit=3")->json();
-            $post->comments = $comments['comments']; // adicionando dinamicamente ao retorno
-        }
 
-        /** 3) Criar paginação usando TOTAL da API, não do banco local */
         $paginator = new LengthAwarePaginator(
             $posts,
             $totalApi,
