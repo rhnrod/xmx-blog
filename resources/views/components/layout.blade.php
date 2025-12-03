@@ -29,7 +29,7 @@
     <header class="sticky top-0 z-50 bg-white shadow-lg dark:bg-gray-800 dark:shadow-2xl transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-center items-center relative">
             
-            <a href="#" class="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 tracking-tight">
+            <a href={{ url('/')  }} class="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 tracking-tight">
                 XMX Blog
             </a>
 

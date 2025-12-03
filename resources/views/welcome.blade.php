@@ -9,8 +9,10 @@
                 <!-- @foreach ($posts as $post) -->
                 <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-[1.01] dark:bg-gray-800 dark:shadow-gray-700/50">
                     
-                    <h2 class="text-3xl font-extrabold text-gray-900 mb-3 hover:text-indigo-600 cursor-pointer dark:text-white dark:hover:text-indigo-400">
+                    <h2>
+                        <a href={{ route('posts.show', ['id' => $post['id']]) }} class="text-3xl font-extrabold text-gray-900 mb-3 hover:text-indigo-600 cursor-pointer dark:text-white dark:hover:text-indigo-400">
                         {{ $post['title'] }}
+                        </a>
                     </h2>
                     
                     <p class="text-gray-500 dark:text-gray-400 mb-4 text-sm">

@@ -63,9 +63,12 @@ class PostController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function showPost($id)
     {
-        //
+        $post = Http::get("https://dummyjson.com/posts/$id")->json();
+        $comments = Http::get("https://dummyjson.com/posts/$id/comments")->json();
+
+        return view('posts.show', compact('post', 'comments'));
     }
 
     /**
