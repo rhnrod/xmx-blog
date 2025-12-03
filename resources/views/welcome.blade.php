@@ -16,7 +16,9 @@
                     </h2>
                     
                     <p class="text-gray-500 dark:text-gray-400 mb-4 text-sm">
-                        <span class="font-medium mr-12">{{ $post['user']['firstName']  }} {{ $post['user']['lastName'] }}</span>
+                        <a href={{ route('user.show', ['id' => $post['user']['id']]) }} class="hover:underline">
+                            <span class="font-medium mr-12">{{ $post['user']['firstName']  }} {{ $post['user']['lastName'] }}</span>
+                        </a>
                         <span class="font-medium mr-4">Views: {{ $post['views'] }}</span>
                         <span class="font-medium text-green-600">👍 {{ $post['reactions']['likes'] }}</span>
                         <span class="font-medium text-red-600">👎 {{ $post['reactions']['dislikes'] }}</span>
