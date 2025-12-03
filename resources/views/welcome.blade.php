@@ -75,27 +75,22 @@
                 <div class="bg-white p-6 rounded-xl shadow-md dark:bg-gray-800 dark:shadow-gray-700/50">
                     <h3 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700 dark:text-gray-300 dark:border-gray-700">Categorias</h3>
                     <ul class="space-y-2 text-gray-600 dark:text-gray-400">
-                        <li><a href="#" class="hover:text-indigo-600 transition duration-150 dark:hover:text-indigo-400">Tecnologia (15)</a></li>
-                        <li><a href="#" class="hover:text-indigo-600 transition duration-150 dark:hover:text-indigo-400">Viagem (8)</a></li>
-                        <li><a href="#" class="hover:text-indigo-600 transition duration-150 dark:hover:text-indigo-400">Culinária (12)</a></li>
-                        <li><a href="#" class="hover:text-indigo-600 transition duration-150 dark:hover:text-indigo-400">História (5)</a></li>
+                        <!-- Itera sobre as tags e suas contagens passadas pelo Controller -->
+                        @forelse ($tagCounts as $tag => $count)
+                        <li>
+                            <!-- Ao clicar, busca a tag. Usamos o parâmetro 'tag' para que o Controller filtre por tags exatas. -->
+                            <a
+                            href="{{ url('/') }}?tag={{ urlencode($tag) }}"
+                            class="hover:text-red-600 transition duration-150 dark:hover:text-red-400 capitalize flex justify-between"
+                            >
+                            <span class="truncate">{{ $tag }}</span>
+                            <span class="font-semibold text-xs ml-2 py-0.5 px-2 bg-red-100 text-red-700 rounded-full dark:bg-red-900 dark:text-red-300">{{ $count }}</span>
+                            </a>
+                        </li>
+                        @empty
+                            <li>Nenhuma categoria encontrada.</li>
+                        @endforelse
                     </ul>
-                </div>
-
-                <!-- Card de Tags Populares - Cores: Vermelho, Índigo, Roxo -->
-                <div class="bg-white p-6 rounded-xl shadow-md dark:bg-gray-800 dark:shadow-gray-700/50">
-                    <h3 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700 dark:text-gray-300 dark:border-gray-700">Tags Populares</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <!-- Red - Vermelho (Dark: Mais escuro) -->
-                        <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full cursor-pointer hover:bg-red-200 transition duration-150 dark:bg-red-700 dark:text-red-100 dark:hover:bg-red-600">#crime</span>
-                        <!-- Indigo - Índigo -->
-                        <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-medium rounded-full cursor-pointer hover:bg-indigo-200 transition duration-150 dark:bg-indigo-700 dark:text-indigo-100 dark:hover:bg-indigo-600">#american</span>
-                        <!-- Purple - Roxo -->
-                        <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full cursor-pointer hover:bg-purple-200 transition duration-150 dark:bg-purple-700 dark:text-purple-100 dark:hover:bg-purple-600">#history</span>
-                        <!-- Gray/Secondary -->
-                        <span class="px-3 py-1 bg-gray-200 text-gray-700 text-sm font-medium rounded-full cursor-pointer hover:bg-gray-300 transition duration-150 dark:bg-gray-600 dark:text-gray-100 dark:hover:bg-gray-500">#code</span>
-                        <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full cursor-pointer hover:bg-red-200 transition duration-150 dark:bg-red-700 dark:text-red-100 dark:hover:bg-red-600">#life</span>
-                    </div>
                 </div>
             </aside>
         </div>

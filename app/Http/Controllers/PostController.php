@@ -19,11 +19,18 @@ class PostController extends Controller
     public function posts()
     {
         $search = request()->get('search');
+        $tagFilter = request()->get('tag'); // NOVO: Captura o parâmetro 'tag' para filtrar por categoria/tag
+        
         $page   = request()->get('page', 1);
         $limit  = 30;
         $skip   = ($page - 1) * $limit;
         $searchIds = [];
         $url = "https://dummyjson.com/posts";
+
+        // Se houver filtro de tag, tratamos isso como uma busca local (não API) e ignoramos a busca de texto geral na API para esta requisição.
+        if ($tagFilter) {
+            $search = null; // Prioriza o filtro de tag e desativa a busca de texto na API
+        }
 
         if ($search) {
             $url = "https://dummyjson.com/posts/search";
@@ -42,6 +49,7 @@ class PostController extends Controller
         }
 
         // 1. PRIMEIRA CHAMADA À API
+        // Esta chamada ainda é necessária para sincronizar os dados paginados/iniciais ou o resultado da busca de texto.
         $response = Http::get($url, $queryParams)->json();
         
         $postsFromApi = $response['posts'] ?? [];
@@ -49,8 +57,7 @@ class PostController extends Controller
         $currentPostCount = count($postsFromApi);
 
         // 2. LÓGICA DE COMPENSAÇÃO/PREENCHIMENTO DE PÁGINA
-        // Se a busca retornar menos que o limite E houver mais posts disponíveis no total, 
-        // tentamos buscar o restante na próxima página para preencher esta.
+        // A compensação só é necessária se for uma busca de texto genérica (via API)
         if ($search && $currentPostCount < $limit && ($skip + $currentPostCount) < $totalApi) {
             $needed = $limit - $currentPostCount;
             $nextSkip = $skip + $currentPostCount;
@@ -151,11 +158,22 @@ class PostController extends Controller
             }
         }
 
-        // 4. RECUPERAÇÃO DOS POSTS PAGINADOS
+        // 4. RECUPERAÇÃO DOS POSTS PAGINADOS E FILTRAGEM
         $postsQuery = Post::with(['user', 'comments.user']);
 
-        if ($search) {
-            // Se for busca, usamos os IDs que a API nos devolveu (já limitados e preenchidos)
+        if ($tagFilter) {
+            // NOVO: Se for filtro por tag, usa whereJsonContains para buscar a tag exata
+            // A tag é convertida para minúsculas para corresponder ao formato de contagem
+            $tagValue = strtolower(trim($tagFilter));
+            
+            // whereJsonContains é usado para buscar um valor específico dentro de um array JSON em uma coluna.
+            $postsQuery->whereJsonContains('tags', $tagValue);
+            
+            // Quando filtramos por tag, precisamos recalcular o total para paginação local
+            $totalApi = $postsQuery->count();
+            
+        } elseif ($search) {
+            // Se for busca de texto da API, usamos os IDs que a API nos devolveu (já limitados e preenchidos)
             $postsQuery->whereIn('id', $searchIds);
         }
 
@@ -170,12 +188,37 @@ class PostController extends Controller
             $totalApi,
             $limit,
             $page,
-            ['path' => url('/'), 'query' => request()->query()]
+            // Mantém os parâmetros 'search' ou 'tag' na URL de paginação
+            ['path' => url('/'), 'query' => array_merge(request()->query(), ['tag' => $tagFilter, 'search' => $search])] 
         );
+        
+        // 6. CÁLCULO DAS CATEGORIAS (TAGS)
+        // Puxamos todos os posts para obter a contagem completa das tags sincronizadas.
+        $allPosts = Post::all(); 
+        $tagCounts = [];
+
+        foreach ($allPosts as $post) {
+            // O campo 'tags' da API é uma array de strings, que é salvo como JSON string no DB.
+            // Acessamos $post->tags diretamente, assumindo que o Casting está configurado no Model.
+            $tags = $post->tags;
+
+            if (is_array($tags)) {
+                foreach ($tags as $tag) {
+                    $tag = strtolower(trim($tag));
+                    $tagCounts[$tag] = ($tagCounts[$tag] ?? 0) + 1;
+                }
+            }
+        }
+        
+        // Alterado para ordenar as tags por nome (chave) em ordem alfabética
+        ksort($tagCounts);
+
 
         return view('welcome', [
             'posts' => $paginator, 
-            'search' => $search
+            'search' => $search,
+            'tagCounts' => $tagCounts, // Dados das categorias/tags
+            'tagFilter' => $tagFilter, // Passa o filtro ativo para a view (opcional para feedback ao usuário)
         ]);
     }
 
