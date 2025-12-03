@@ -23,6 +23,7 @@ class PostController extends Controller
             'limit' => $limit,
             'skip'  => $skip
         ])->json();
+        
 
         $totalApi = $response['total'];
 
@@ -67,6 +68,11 @@ class PostController extends Controller
             ->skip($skip)
             ->take($limit)
             ->get();
+        
+        foreach ($posts as $post) {
+            $comments = Http::get("https://dummyjson.com/comments/post/{$post->id}?limit=3")->json();
+            $post->comments = $comments['comments']; // adicionando dinamicamente ao retorno
+        }
 
         /** 3) Criar paginação usando TOTAL da API, não do banco local */
         $paginator = new LengthAwarePaginator(
