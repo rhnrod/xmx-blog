@@ -13,18 +13,29 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index($id)
+   public function index($id)
     {
-        $page = request()->get('page', 1);
-        $limit = 10;
-        $skip = ($page - 1) * $limit;
+        $page  = request()->get('page', 1);
+        $limit = 1;
+        $skip  = ($page - 1) * $limit;
 
+        // 1) Buscar/ criar usuário
         $user = User::find($id) ?? User::create(Http::get("https://dummyjson.com/users/$id")->json());
 
-        /** 2) Buscar total da API apenas 1 vez e salvar para referência futura */
-        if (!$user->posts()->exists()) {
+        // 2) Pegar total da API (chamada leve) — garante que $totalApi exista sempre
+        $apiMeta = Http::get("https://dummyjson.com/users/$id/posts", [
+            'limit' => 1,
+            'skip'  => 0
+        ])->json();
 
-            $api = Http::get("https://dummyjson.com/users/$id/posts?limit=200")->json();
+        $totalApi = $apiMeta['total'] ?? Post::where('user_id', $id)->count();
+
+        // 3) Só popular o DB se não houver posts locais
+        if (! $user->posts()->exists()) {
+            $api = Http::get("https://dummyjson.com/users/$id/posts", [
+                'limit' => $limit,
+                'skip'  => $skip
+            ])->json();
 
             foreach ($api['posts'] as $post) {
                 Post::updateOrCreate(
@@ -42,18 +53,16 @@ class UserController extends Controller
             }
         }
 
-        /** 3) Buscar do banco agora com paginação */
+        // 4) Buscar do banco agora com paginação
         $postsDB = Post::where('user_id', $id)
             ->skip($skip)
             ->take($limit)
             ->get();
 
-        $totalDB = Post::where('user_id', $id)->count();
-
-        /** 4) Criar paginator */
+        // 5) Criar paginator usando o total da API (ou fallback)
         $paginator = new LengthAwarePaginator(
             $postsDB,
-            $totalDB,
+            $totalApi,
             $limit,
             $page,
             ['path' => url("/user/$id/posts"), 'query' => request()->query()]
@@ -86,9 +95,24 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        $users = Http::get("https://dummyjson.com/users/$id?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
+        /** Buscar dados do usuário */
+        $user = Http::get("https://dummyjson.com/users/$id?select=id,firstName,lastName,email,phone,image,birthDate,address")
+                    ->json();
 
-        return view('user.show', ['user' => $users]);
+        /** Buscar TODOS os posts desse usuário */
+        $postsResponse = Http::get("https://dummyjson.com/posts/user/$id")->json();
+
+        /** Total de posts */
+        $totalPosts = $postsResponse['total'] ?? 0;
+
+        /** Últimos 5 posts */
+        $latestPosts = collect($postsResponse['posts'])->sortByDesc('id')->take(5);
+
+        return view('user.show', [
+            'user'        => $user,
+            'posts'       => $latestPosts,   // usados no card
+            'totalPosts'  => $totalPosts,    // para exibir no título
+        ]);
     }
 
     /**

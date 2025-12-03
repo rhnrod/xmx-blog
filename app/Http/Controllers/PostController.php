@@ -19,14 +19,12 @@ class PostController extends Controller
         $limit = 30;
         $skip  = ($page - 1) * $limit;
 
-        /** 1) Buscar somente o necessário da API */
         $response = Http::get("https://dummyjson.com/posts", [
             'limit' => $limit,
             'skip'  => $skip
         ])->json();
 
-        /** ← total REAL da API */
-        $totalApi = $response['total']; // 🔥 importante!
+        $totalApi = $response['total'];
 
         foreach ($response['posts'] as $p) {
 
@@ -73,7 +71,7 @@ class PostController extends Controller
         /** 3) Criar paginação usando TOTAL da API, não do banco local */
         $paginator = new LengthAwarePaginator(
             $posts,
-            $totalApi, // 👈 agora paginação é a correta
+            $totalApi,
             $limit,
             $page,
             ['path' => url('/'), 'query' => request()->query()]
@@ -113,7 +111,7 @@ class PostController extends Controller
             $comment['avatar'] = $avatar['image'];
         }
 
-        return view('post.show', compact('post', 'comments', 'user', 'avatar'));
+        return view('post.show', compact('post', 'comments', 'user'));
     }
 
     /**
