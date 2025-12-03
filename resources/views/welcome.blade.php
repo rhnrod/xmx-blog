@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout :showHeader="true" :showFooter="true">
     <x-slot class="dark:bg-gray-900">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
 

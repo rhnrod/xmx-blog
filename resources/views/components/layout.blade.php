@@ -41,7 +41,7 @@
 </head>
 <body class="text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300">
 
-    <!-- Cabeçalho Simplificado -->
+    @if($showHeader)
     <header class="sticky top-0 z-50 bg-white shadow-lg dark:bg-gray-800 dark:shadow-2xl transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-center items-center relative">
             
@@ -60,11 +60,17 @@
             </button>
         </div>
     </header>
+    @endif
 
+    @if($showHeader)
     <main class="dark:bg-gray-900 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    @else
+    <main class="dark:bg-gray-900 max-w-7xl mx-auto">
+    @endif
         {{ $slot }}
     </main>
 
+    @if($showFooter)
     <footer class="bg-gray-900 mt-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-gray-400">
             <p>&copy; 2025 XMX Blog. Todos os direitos reservados.</p>
@@ -75,6 +81,7 @@
             </div>
         </div>
     </footer>
+    @endif
 
     <!-- 🔥 SCRIPT FINAL PARA TOGGLE + ÍCONES -->
     <script>
