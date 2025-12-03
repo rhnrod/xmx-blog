@@ -4,7 +4,7 @@
 
             <!-- Coluna Principal (Posts) - Estrutura Blade/Laravel -->
             <div class="lg:col-span-2 space-y-10">
-                <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-6 border-b pb-2 dark:border-gray-700">Posts de {{ $post['firstName'] }} {{ $post['lastName'] }}</h1>
+                <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-6 border-b pb-2 dark:border-gray-700">Posts de {{ $user['firstName'] }} {{ $user['lastName'] }}</h1>
 
                 <!-- @foreach ($posts as $post) -->
                 <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-[1.01] dark:bg-gray-800 dark:shadow-gray-700/50">
@@ -20,8 +20,8 @@
                             <span class="font-medium mr-12">{{ $post['user']['firstName']  }} {{ $post['user']['lastName'] }}</span>
                         </a>
                         <span class="font-medium mr-4">Views: {{ $post['views'] }}</span>
-                        <span class="font-medium text-green-600">👍 {{ $post['reactions']['likes'] }}</span>
-                        <span class="font-medium text-red-600">👎 {{ $post['reactions']['dislikes'] }}</span>
+                        <span class="font-medium text-green-600">👍 {{ $post['likes'] ?? $post['reactions']['likes'] }}</span>
+                        <span class="font-medium text-red-600">👎 {{ $post['dislikes'] ?? $post['reactions']['dislikes'] }}</span>
                         <span class="font-medium text-red-600">🗨️ {{ $post['reactions']['comments'] ?? 0}}</span>
                     </p>
 
@@ -30,7 +30,7 @@
                     </p>
                     
                     <div class="flex flex-wrap gap-2 mb-6">
-                        <!-- @foreach ($post['tags'] as $tag) -->
+                        <!-- @foreach ($post['tags'] ?? [] as $tag) -->
                         <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full hover:bg-indigo-200 transition duration-150 cursor-pointer dark:bg-indigo-700 dark:text-indigo-100 dark:hover:bg-indigo-600">
                             {{ $tag ?? 'history' }}
                         </span>

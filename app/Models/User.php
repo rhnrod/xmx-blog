@@ -24,4 +24,9 @@ class User extends Authenticatable
         'address' => 'array',
         'birthDate' => 'date',
     ];
+
+    public function posts()
+    {
+        return $this->hasMany(Post::class);
+    }
 }
