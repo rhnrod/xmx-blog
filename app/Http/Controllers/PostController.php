@@ -28,7 +28,7 @@ class PostController extends Controller
         $total = $response['total']; 
 
         foreach ($posts as &$post) {
-            $post['user'] = Http::get("https://dummyjson.com/users/{$post['userId']}")->json();
+            $post['user'] = Http::get("https://dummyjson.com/users/{$post['userId']}?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
         }
 
         // Criar paginação igual ao Laravel
@@ -71,10 +71,15 @@ class PostController extends Controller
     {
         $post = Http::get("https://dummyjson.com/posts/$id")->json();
         $commentsResponse = Http::get("https://dummyjson.com/comments/post/$id")->json();
-        $comments = $commentsResponse['comments']; // AQUI O SEGREDO
-        $user = Http::get("https://dummyjson.com/users/{$post['userId']}")->json();
+        $comments = $commentsResponse['comments'];
+        $user = Http::get("https://dummyjson.com/users/{$post['userId']}?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
+        
+        foreach ($comments as &$comment) {
+            $avatar = Http::get("https://dummyjson.com/users/{$comment['user']['id']}?select=image")->json();
+            $comment['avatar'] = $avatar['image'];
+        }
 
-        return view('post.show', compact('post', 'comments', 'user'));
+        return view('post.show', compact('post', 'comments', 'user', 'avatar'));
     }
 
     /**

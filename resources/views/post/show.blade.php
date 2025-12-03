@@ -54,13 +54,15 @@
                     <div class="p-4 bg-gray-100 rounded-xl flex gap-x-4 dark:bg-gray-700">
                         {{-- Cabeçalho --}}
                         <div>
-                            <img src={{ $user['image'] }} class="w-12 h-12 rounded-full" alt="">
+                           <img src={{ $comment['avatar'] }} class="w-12 h-12 rounded-full" alt="">
                         </div>
                         <div class="flex-1 justify-between">
 
                             <div class="flex items-center justify-between mb-2">
-                                <span class="font-semibold text-gray-900 dark:text-white">
-                                    {{ $comment['user']['fullName'] }}
+                            <span class="font-semibold text-gray-900 dark:text-white">
+                                    <a href={{ route('user.show', ['id' => $comment['user']['id']]) }} class="hover:underline">
+                                        {{ $comment['user']['fullName'] }}
+                                    </a>
                             </span>
                         
                             <span class="text-xs text-gray-500 dark:text-gray-400">
