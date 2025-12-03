@@ -144,27 +144,49 @@ class PostController extends Controller
         return view('post.show', compact('post', 'comments', 'user'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+     public function like($id)
     {
-        //
+        $post = Post::findOrFail($id);
+        $sessionKey = "post_vote_$id";
+
+        // Se já tiver dado like, remove
+        if (session($sessionKey) === 'like') {
+            $post->decrement('likes');
+            session()->forget($sessionKey);
+            return back();
+        }
+
+        // Se tinha dislike antes, remove antes de dar like
+        if (session($sessionKey) === 'dislike') {
+            $post->decrement('dislikes');
+        }
+
+        $post->increment('likes');
+        session([$sessionKey => 'like']);
+
+        return back();
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function dislike($id)
     {
-        //
-    }
+        $post = Post::findOrFail($id);
+        $sessionKey = "post_vote_$id";
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        // Se já tiver dado dislike, remove
+        if (session($sessionKey) === 'dislike') {
+            $post->decrement('dislikes');
+            session()->forget($sessionKey);
+            return back();
+        }
+
+        // Se tinha like antes, remove antes de dar dislike
+        if (session($sessionKey) === 'like') {
+            $post->decrement('likes');
+        }
+
+        $post->increment('dislikes');
+        session([$sessionKey => 'dislike']);
+
+        return back();
     }
 }
