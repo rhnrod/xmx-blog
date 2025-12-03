@@ -27,6 +27,10 @@ class PostController extends Controller
         $posts = $response['posts'];
         $total = $response['total']; 
 
+        foreach ($posts as &$post) {
+            $post['user'] = Http::get("https://dummyjson.com/users/{$post['userId']}")->json();
+        }
+
         // Criar paginação igual ao Laravel
         $paginator = new LengthAwarePaginator(
             $posts,
@@ -40,7 +44,7 @@ class PostController extends Controller
         );
 
         return view('welcome', [
-            'posts' => $paginator
+            'posts' => $paginator,
         ]);
     }
 
@@ -67,8 +71,9 @@ class PostController extends Controller
     {
         $post = Http::get("https://dummyjson.com/posts/$id")->json();
         $comments = Http::get("https://dummyjson.com/posts/$id/comments")->json();
+        $user = Http::get("https://dummyjson.com/users/{$post['userId']}")->json();
 
-        return view('posts.show', compact('post', 'comments'));
+        return view('post.show', compact('post', 'comments', 'user'));
     }
 
     /**

@@ -16,10 +16,11 @@
                     </h2>
                     
                     <p class="text-gray-500 dark:text-gray-400 mb-4 text-sm">
+                        <span class="font-medium mr-12">{{ $post['user']['firstName']  }} {{ $post['user']['lastName'] }}</span>
                         <span class="font-medium mr-4">Views: {{ $post['views'] }}</span>
-                        <span class="font-medium mr-4">User ID: {{ $post['userId'] }}</span>
                         <span class="font-medium text-green-600">👍 {{ $post['reactions']['likes'] }}</span>
                         <span class="font-medium text-red-600">👎 {{ $post['reactions']['dislikes'] }}</span>
+                        <span class="font-medium text-red-600">🗨️ {{ $post['reactions']['comments'] ?? 0}}</span>
                     </p>
 
                     <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
@@ -33,12 +34,6 @@
                         </span>
                         <!-- @endforeach -->
                     </div>
-
-                    <!-- Link para o Post Completo -->
-                    <a href="#" class="inline-flex items-center text-indigo-600 font-semibold hover:text-indigo-800 transition duration-150 dark:text-indigo-400 dark:hover:text-indigo-300">
-                        Leia o Artigo Completo
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                    </a>
                 </div>
                 <!-- @endforeach -->
 

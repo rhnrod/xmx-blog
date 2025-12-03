@@ -11,7 +11,7 @@
             </h1>
 
             <div class="flex flex-wrap items-center space-x-6 text-sm text-gray-500 dark:text-gray-400 mb-6 border-b pb-4 dark:border-gray-700">
-                <span class="font-medium">User ID: {{ $post->userId ?? 121 }}</span>
+                <span class="font-medium mr-8">{{ $user['firstName'] }} {{ $user['lastName'] }}</span>
                 <span class="font-medium">Views: {{ $post->views ?? 305 }}</span>
                 
                 <!-- Reações -->
