@@ -11,3 +11,9 @@
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+@layer components {
+    [aria-label="Pagination Navigation"] > div {
+        @apply flex flex-col justify-center items-center gap-2;
+    }
+}

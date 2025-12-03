@@ -9,12 +9,10 @@
                 <!-- @foreach ($posts as $post) -->
                 <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-[1.01] dark:bg-gray-800 dark:shadow-gray-700/50">
                     
-                    <!-- Título do Post -->
                     <h2 class="text-3xl font-extrabold text-gray-900 mb-3 hover:text-indigo-600 cursor-pointer dark:text-white dark:hover:text-indigo-400">
                         {{ $post['title'] }}
                     </h2>
                     
-                    <!-- Metadados -->
                     <p class="text-gray-500 dark:text-gray-400 mb-4 text-sm">
                         <span class="font-medium mr-4">Views: {{ $post['views'] }}</span>
                         <span class="font-medium mr-4">User ID: {{ $post['userId'] }}</span>
@@ -22,18 +20,16 @@
                         <span class="font-medium text-red-600">👎 {{ $post['reactions']['dislikes'] }}</span>
                     </p>
 
-                    <!-- Corpo do Post -->
                     <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
                         {{ $post->body ?? "His mother had always taught him not to ever think of himself as better than others. He'd tried to live by this motto..." }}
                     </p>
                     
-                    <!-- Tags -->
                     <div class="flex flex-wrap gap-2 mb-6">
-                        {{-- <!-- @foreach ($post->tags as $tag) --> --}}
+                        <!-- @foreach ($post['tags'] as $tag) -->
                         <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full hover:bg-indigo-200 transition duration-150 cursor-pointer dark:bg-indigo-700 dark:text-indigo-100 dark:hover:bg-indigo-600">
-                            #{{ $tag ?? 'history' }}
+                            {{ $tag ?? 'history' }}
                         </span>
-                        {{-- <!-- @endforeach --> --}}
+                        <!-- @endforeach -->
                     </div>
 
                     <!-- Link para o Post Completo -->
@@ -87,7 +83,7 @@
                 </div>
             </aside>
         </div>
-        <div>
+        <div class="mt-10 h-40 justify-center flex flex-col items-center">
             {{ $posts->links() }}
         </div>
     </x-slot>

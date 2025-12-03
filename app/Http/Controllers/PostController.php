@@ -15,7 +15,7 @@ class PostController extends Controller
     {
         $page = request()->get('page', 1);
 
-        $limit = 10; 
+        $limit = 30; 
         $skip = ($page - 1) * $limit;
 
         // Chamada à API
@@ -25,7 +25,7 @@ class PostController extends Controller
         ])->json();
 
         $posts = $response['posts'];
-        $total = $response['total']; // dummyjson retorna o total real
+        $total = $response['total']; 
 
         // Criar paginação igual ao Laravel
         $paginator = new LengthAwarePaginator(
