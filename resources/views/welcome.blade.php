@@ -57,17 +57,20 @@
 
             <!-- Coluna da Barra Lateral -->
             <aside class="lg:sticky lg:top-20 space-y-8 max-h-screen lg:max-h-[calc(100vh-2rem)] overflow-y-auto">
-                <!-- Card de Pesquisa - Cor: Vermelho -->
-                <div class="bg-white p-6 rounded-xl shadow-md dark:bg-gray-800 dark:shadow-gray-700/50">
-                    <h3 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700 dark:text-gray-300 dark:border-gray-700">Pesquisar</h3>
+                <form action="{{ url('/') }}" method="GET" class="focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:border-gray-600">
                     <div class="flex">
-                        <input type="text" placeholder="Buscar no blog..." class="w-full px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <button class="bg-red-600 text-white px-4 rounded-r-lg hover:bg-red-700 transition duration-150 dark:bg-red-700 dark:hover:bg-red-600">
+                        <input 
+                            type="text" 
+                            name="search" 
+                            placeholder="Buscar no blog..." 
+                            value="{{ $search ?? '' }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-l-lg  dark:text-white"
+                        >
+                        <button type="submit" class="bg-red-600 text-white px-4 rounded-r-lg hover:bg-red-700 transition duration-150 dark:bg-red-700 dark:hover:bg-red-600">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </button>
                     </div>
-                </div>
-
+                </form>
                 <!-- Card de Categorias - Cor: Indigo -->
                 <div class="bg-white p-6 rounded-xl shadow-md dark:bg-gray-800 dark:shadow-gray-700/50">
                     <h3 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700 dark:text-gray-300 dark:border-gray-700">Categorias</h3>

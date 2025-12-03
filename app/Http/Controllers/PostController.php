@@ -18,90 +18,116 @@ class PostController extends Controller
      */
     public function posts()
     {
+        $search = request()->get('search');
         $page  = request()->get('page', 1);
         $limit = 30;
         $skip  = ($page - 1) * $limit;
+        $searchIds = [];
 
-        $response = Http::get("https://dummyjson.com/posts", [
-            'limit' => $limit,
-            'skip'  => $skip,
-            'sortBy' => 'id',
-            'order' => 'asc'
-        ])->json();
+        if ($search) {
+            $url = "https://dummyjson.com/posts/search";
+            $queryParams = [
+                'q'     => $search,
+                'limit' => $limit,
+                'skip'  => $skip,
+            ];
+        } else {
+            $url = "https://dummyjson.com/posts";
+            $queryParams = [
+                'limit'  => $limit,
+                'skip'   => $skip,
+                'sortBy' => 'id',
+                'order'  => 'asc'
+            ];
+        }
+
+        $response = Http::get($url, $queryParams)->json();
 
         $totalApi = $response['total'];
 
-        foreach ($response['posts'] as $p) {
-            $localUser = User::find($p['userId']);
+        if (isset($response['posts'])) {
+            foreach ($response['posts'] as $p) {
 
-            if (!$localUser || !$localUser->firstName) {
-                $apiUser = Http::get("https://dummyjson.com/users/{$p['userId']}")->json();
+                if ($search) {
+                    $searchIds[] = $p['id'];
+                }
 
-                User::updateOrCreate(
-                    ['id' => $apiUser['id']],
+                $localUser = User::find($p['userId']);
+
+                if (!$localUser || !$localUser->firstName) {
+                    $apiUser = Http::get("https://dummyjson.com/users/{$p['userId']}")->json();
+
+                    User::updateOrCreate(
+                        ['id' => $apiUser['id']],
+                        [
+                            'firstName' => $apiUser['firstName'] ?? null,
+                            'lastName'  => $apiUser['lastName']  ?? null,
+                            'email'     => $apiUser['email']     ?? null,
+                            'phone'     => $apiUser['phone']     ?? null,
+                            'image'     => $apiUser['image']     ?? null,
+                            'birth_date'=> $apiUser['birthDate'] ?? null,
+                            'address'   => json_encode($apiUser['address'])
+                        ]
+                    );
+                }
+
+                $post = Post::updateOrCreate(
+                    ['id' => $p['id']],
                     [
-                        'firstName' => $apiUser['firstName'] ?? null,
-                        'lastName'  => $apiUser['lastName']  ?? null,
-                        'email'     => $apiUser['email']     ?? null,
-                        'phone'     => $apiUser['phone']     ?? null,
-                        'image'     => $apiUser['image']     ?? null,
-                        'birth_date'=> $apiUser['birthDate'] ?? null,
-                        'address'   => json_encode($apiUser['address'])
-                    ]
-                );
-            }
-
-            $post = Post::updateOrCreate(
-                ['id' => $p['id']],
-                [
-                    'title'    => $p['title'],
-                    'body'     => $p['body'],
-                    'tags'     => $p['tags'],
-                    'user_id'  => $p['userId'],
-                ]
-            );
-
-            if ($post->wasRecentlyCreated) {
-                $post->likes    = $p['reactions']['likes'] ?? 0;
-                $post->dislikes = $p['reactions']['dislikes'] ?? 0;
-                $post->views    = $p['views'] ?? 0;
-                $post->save();
-            }
-
-            $comments = Http::get("https://dummyjson.com/comments/post/{$p['id']}")->json()['comments'];
-
-            foreach ($comments as $c) {
-
-                $commentUser = Http::get("https://dummyjson.com/users/{$c['user']['id']}")->json();
-
-                User::updateOrCreate(
-                    ['id' => $commentUser['id']],
-                    [
-                        'firstName' => $commentUser['firstName'] ?? null,
-                        'lastName'  => $commentUser['lastName']  ?? null,
-                        'email'     => $commentUser['email']     ?? null,
-                        'phone'     => $commentUser['phone']     ?? null,
-                        'image'     => $commentUser['image']     ?? null,
-                        'birth_date'=> $commentUser['birthDate'] ?? null,
-                        'address'   => json_encode($commentUser['address'])
+                        'title'    => $p['title'],
+                        'body'     => $p['body'],
+                        'tags'     => $p['tags'],
+                        'user_id'  => $p['userId'],
                     ]
                 );
 
-                /** Salvar comentário */
-                Comment::updateOrCreate(
-                    ['id' => $c['id']], // se existir não duplica
-                    [
-                        'body'    => $c['body'],
-                        'likes'   => $c['likes'] ?? 0,
-                        'post_id' => $p['id'],
-                        'user_id' => $c['user']['id'],
-                    ]
-                );
+                if ($post->wasRecentlyCreated) {
+                    $post->likes    = $p['reactions']['likes'] ?? 0;
+                    $post->dislikes = $p['reactions']['dislikes'] ?? 0;
+                    $post->views    = $p['views'] ?? 0;
+                    $post->save();
+                }
+
+                $comments = Http::get("https://dummyjson.com/comments/post/{$p['id']}")->json()['comments'];
+
+                foreach ($comments as $c) {
+
+                    $commentUser = Http::get("https://dummyjson.com/users/{$c['user']['id']}")->json();
+
+                    User::updateOrCreate(
+                        ['id' => $commentUser['id']],
+                        [
+                            'firstName' => $commentUser['firstName'] ?? null,
+                            'lastName'  => $commentUser['lastName']  ?? null,
+                            'email'     => $commentUser['email']     ?? null,
+                            'phone'     => $commentUser['phone']     ?? null,
+                            'image'     => $commentUser['image']     ?? null,
+                            'birth_date'=> $commentUser['birthDate'] ?? null,
+                            'address'   => json_encode($commentUser['address'])
+                        ]
+                    );
+
+                    /** Salvar comentário */
+                    Comment::updateOrCreate(
+                        ['id' => $c['id']], // se existir não duplica
+                        [
+                            'body'    => $c['body'],
+                            'likes'   => $c['likes'] ?? 0,
+                            'post_id' => $p['id'],
+                            'user_id' => $c['user']['id'],
+                        ]
+                    );
+                }
             }
         }
 
-        $posts = Post::with(['user', 'comments.user'])
-            ->orderBy('id', 'asc')
+        $postsQuery = Post::with(['user', 'comments.user']);
+
+        if ($search) {
+            $postsQuery->whereIn('id', $searchIds);
+        }
+
+        $posts = $postsQuery->orderBy('id', 'asc')
             ->skip($skip)
             ->take($limit)
             ->get();
@@ -114,7 +140,10 @@ class PostController extends Controller
             ['path' => url('/'), 'query' => request()->query()]
         );
 
-        return view('welcome', ['posts' => $paginator]);
+        return view('welcome', [
+            'posts' => $paginator, 
+            'search' => $search
+        ]);
     }
 
     /**
