@@ -7,7 +7,7 @@
                 <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-6 border-b pb-2 dark:border-gray-700">Posts Recentes</h1>
 
                 <!-- @foreach ($posts as $post) -->
-                <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-[1.01] dark:bg-gray-800 dark:shadow-gray-700/50">
+                <div class="bg-slate-200 p-8 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-[1.01] dark:bg-gray-800 dark:shadow-gray-700/50">
                     
                     <h2>
                         <a href={{ route('post.show', ['id' => $post['id']]) }} class="text-3xl font-extrabold text-gray-900 mb-3 hover:text-indigo-600 cursor-pointer dark:text-white dark:hover:text-indigo-400">
@@ -72,7 +72,7 @@
                     </div>
                 </form>
                 <!-- Card de Categorias - Cor: Indigo -->
-                <div class="bg-white p-6 rounded-xl shadow-md dark:bg-gray-800 dark:shadow-gray-700/50">
+                <div class="bg-slate-200 p-6 rounded-xl shadow-md dark:bg-gray-800 dark:shadow-gray-700/50">
                     <h3 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700 dark:text-gray-300 dark:border-gray-700">Categorias</h3>
                     <ul class="space-y-2 text-gray-600 dark:text-gray-400">
                         <!-- Itera sobre as tags e suas contagens passadas pelo Controller -->
