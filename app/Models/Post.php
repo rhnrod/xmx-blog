@@ -19,6 +19,9 @@ class Post extends Model
     // Transformar JSON em array automaticamente
     protected $casts = [
         'tags' => 'array',
+        'likes' => 'integer',
+        'dislikes' => 'integer',
+        'views' => 'integer'
     ];
 
     // Relacionamento com User

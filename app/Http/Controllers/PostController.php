@@ -24,7 +24,9 @@ class PostController extends Controller
 
         $response = Http::get("https://dummyjson.com/posts", [
             'limit' => $limit,
-            'skip'  => $skip
+            'skip'  => $skip,
+            'sortBy' => 'id',
+            'order' => 'asc'
         ])->json();
 
         $totalApi = $response['total'];
@@ -49,18 +51,22 @@ class PostController extends Controller
                 );
             }
 
-            Post::updateOrCreate(
+            $post = Post::updateOrCreate(
                 ['id' => $p['id']],
                 [
                     'title'    => $p['title'],
                     'body'     => $p['body'],
                     'tags'     => $p['tags'],
-                    'likes'    => $p['reactions']['likes'] ?? 0,
-                    'dislikes' => $p['reactions']['dislikes'] ?? 0,
-                    'views'    => $p['views'] ?? 0,
                     'user_id'  => $p['userId'],
                 ]
             );
+
+            if ($post->wasRecentlyCreated) {
+                $post->likes    = $p['reactions']['likes'] ?? 0;
+                $post->dislikes = $p['reactions']['dislikes'] ?? 0;
+                $post->views    = $p['views'] ?? 0;
+                $post->save();
+            }
 
             $comments = Http::get("https://dummyjson.com/comments/post/{$p['id']}")->json()['comments'];
 
@@ -95,6 +101,7 @@ class PostController extends Controller
         }
 
         $posts = Post::with(['user', 'comments.user'])
+            ->orderBy('id', 'asc')
             ->skip($skip)
             ->take($limit)
             ->get();

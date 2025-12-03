@@ -8,3 +8,5 @@ Route::get('/', [PostController::class, 'posts']);
 Route::get('/post/{id}', [PostController::class, 'showPost'])->name('post.show');
 Route::get('/user/{id}', [UserController::class, 'show'])->name('user.show');
 Route::get('/user/{id}/posts', [UserController::class, 'index'])->name('user.index');
+Route::post('/post/{id}/like', [PostController::class, 'like'])->name('post.like');
+Route::post('/post/{id}/dislike', [PostController::class, 'dislike'])->name('post.dislike');
