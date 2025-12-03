@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use App\Models\Post;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class PostController extends Controller
@@ -13,39 +15,71 @@ class PostController extends Controller
      */
     public function posts()
     {
-        $page = request()->get('page', 1);
+        $page  = request()->get('page', 1);
+        $limit = 30;
+        $skip  = ($page - 1) * $limit;
 
-        $limit = 30; 
-        $skip = ($page - 1) * $limit;
-
-        // Chamada à API
+        /** 1) Buscar somente o necessário da API */
         $response = Http::get("https://dummyjson.com/posts", [
             'limit' => $limit,
-            'skip'  => $skip,
+            'skip'  => $skip
         ])->json();
 
-        $posts = $response['posts'];
-        $total = $response['total']; 
+        /** ← total REAL da API */
+        $totalApi = $response['total']; // 🔥 importante!
 
-        foreach ($posts as &$post) {
-            $post['user'] = Http::get("https://dummyjson.com/users/{$post['userId']}?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
+        foreach ($response['posts'] as $p) {
+
+            $localUser = User::find($p['userId']);
+
+            if (!$localUser || !$localUser->firstName || !$localUser->lastName) {
+
+                $apiUser = Http::get("https://dummyjson.com/users/{$p['userId']}")->json();
+
+                User::updateOrCreate(
+                    ['id' => $apiUser['id']],
+                    [
+                        'firstName' => $apiUser['firstName'] ?? $localUser->firstName ?? null,
+                        'lastName'  => $apiUser['lastName']  ?? $localUser->lastName  ?? null,
+                        'email'     => $apiUser['email']     ?? $localUser->email     ?? null,
+                        'phone'     => $apiUser['phone']     ?? $localUser->phone     ?? null,
+                        'image'     => $apiUser['image']     ?? $localUser->image     ?? null,
+                        'birth_date'=> $apiUser['birthDate'] ?? $localUser->birth_date ?? null,
+                        'address'   => json_encode($apiUser['address'] ?? $localUser->address),
+                    ]
+                );
+            }
+
+            Post::updateOrCreate(
+                ['id' => $p['id']],
+                [
+                    'title'    => $p['title'],
+                    'body'     => $p['body'],
+                    'tags'     => $p['tags'],
+                    'likes'    => $p['reactions']['likes'] ?? 0,
+                    'dislikes' => $p['reactions']['dislikes'] ?? 0,
+                    'views'    => $p['views'] ?? 0,
+                    'user_id'  => $p['userId'],
+                ]
+            );
         }
 
-        // Criar paginação igual ao Laravel
+        /** 2) Puxar só o que precisa do banco */
+        $posts = Post::with('user')
+            ->skip($skip)
+            ->take($limit)
+            ->get();
+
+        /** 3) Criar paginação usando TOTAL da API, não do banco local */
         $paginator = new LengthAwarePaginator(
             $posts,
-            $total, 
-            $limit,  
-            $page,    
-            [
-                'path' => url('/'), // mantém rota /
-                'query' => request()->query(), // mantém parâmetros da URL
-            ]
+            $totalApi, // 👈 agora paginação é a correta
+            $limit,
+            $page,
+            ['path' => url('/'), 'query' => request()->query()]
         );
 
-        return view('welcome', [
-            'posts' => $paginator,
-        ]);
+        return view('welcome', ['posts' => $paginator]);
     }
 
     /**

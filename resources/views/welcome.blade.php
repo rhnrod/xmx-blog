@@ -20,8 +20,8 @@
                             <span class="font-medium mr-12">{{ $post['user']['firstName']  }} {{ $post['user']['lastName'] }}</span>
                         </a>
                         <span class="font-medium mr-4">Views: {{ $post['views'] }}</span>
-                        <span class="font-medium text-green-600">👍 {{ $post['reactions']['likes'] }}</span>
-                        <span class="font-medium text-red-600">👎 {{ $post['reactions']['dislikes'] }}</span>
+                        <span class="font-medium text-green-600">👍 {{ $post['reactions']['likes'] ?? $post['likes'] }}</span>
+                        <span class="font-medium text-red-600">👎 {{ $post['reactions']['dislikes'] ?? $post['dislikes'] }}</span>
                         <span class="font-medium text-red-600">🗨️ {{ $post['reactions']['comments'] ?? 0}}</span>
                     </p>
 
