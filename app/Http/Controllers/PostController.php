@@ -70,7 +70,8 @@ class PostController extends Controller
     public function showPost($id)
     {
         $post = Http::get("https://dummyjson.com/posts/$id")->json();
-        $comments = Http::get("https://dummyjson.com/posts/$id/comments")->json();
+        $commentsResponse = Http::get("https://dummyjson.com/comments/post/$id")->json();
+        $comments = $commentsResponse['comments']; // AQUI O SEGREDO
         $user = Http::get("https://dummyjson.com/users/{$post['userId']}")->json();
 
         return view('post.show', compact('post', 'comments', 'user'));
