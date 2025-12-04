@@ -39,7 +39,7 @@
         }
     </style>
 </head>
-<body class="text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300">
+<body class="text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors min-h-screen flex flex-col duration-300">
 
     @if($showHeader)
     <header class="sticky top-0 z-50 bg-white shadow-lg dark:bg-gray-800 dark:shadow-2xl transition-colors duration-300">
@@ -63,21 +63,21 @@
     @endif
 
     @if($showHeader)
-    <main class="dark:bg-gray-900 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <main class="dark:bg-gray-900 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1">
     @else
-    <main class="dark:bg-gray-900 max-w-7xl mx-auto">
+    <main class="dark:bg-gray-900 max-w-7xl mx-auto flex-1">
     @endif
         {{ $slot }}
     </main>
 
     @if($showFooter)
-    <footer class="bg-gray-900 mt-12">
+    <footer class="bg-white dark:bg-gray-900 mt-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-gray-400">
             <p>&copy; 2025 XMX Blog. Todos os direitos reservados.</p>
             <div class="mt-4 space-x-4">
-                <a href="#" class="hover:text-white transition duration-150">Termos de Uso</a>
+                <a href="#" class="hover:text-indigo-900 hover:dark:text-white transition duration-150">Termos de Uso</a>
                 <span class="text-gray-600">|</span>
-                <a href="#" class="hover:text-white transition duration-150">Política de Privacidade</a>
+                <a href="#" class="hover:text-indigo-900 hover:dark:text-white transition duration-150">Política de Privacidade</a>
             </div>
         </div>
     </footer>

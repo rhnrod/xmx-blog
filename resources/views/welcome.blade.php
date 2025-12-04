@@ -41,7 +41,9 @@
                                 </x-slot>
                             </x-partials.like>
                             <x-partials.dislike :postId="$post['id']">
+                                <x-slot>
                                 {{ $post['reactions']['dislikes'] ?? $post['dislikes'] }}
+                                </x-slot>
                             </x-partials.dislike>
                             <x-partials.comment :postId="$post['id']">
                                 <x-slot>

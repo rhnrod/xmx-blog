@@ -10,7 +10,7 @@
                 </a>
                 <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-6 border-b pb-3 dark:border-gray-700 text-center md:text-left">Detalhes do Perfil</h1>
 
-                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl dark:bg-gray-800 dark:shadow-gray-700/50">
+                <div class="bg-slate-200 p-6 md:p-8 rounded-2xl shadow-xl dark:bg-gray-800 dark:shadow-gray-700/50">
                     <div class="flex flex-col gap-4 md:flex-row items-start md:items-center space-y-6 md:space-y-0 md:space-x-8">
                         
                         <img 

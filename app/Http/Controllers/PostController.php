@@ -238,22 +238,112 @@ class PostController extends Controller
         //
     }
 
-    /**
+/**
      * Display the specified resource.
      */
     public function showPost($id)
     {
-        $post = Http::get("https://dummyjson.com/posts/$id")->json();
-        $commentsResponse = Http::get("https://dummyjson.com/comments/post/$id")->json();
-        $comments = $commentsResponse['comments'];
-        $user = Http::get("https://dummyjson.com/users/{$post['userId']}?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
-        
-        foreach ($comments as &$comment) {
-            $avatar = Http::get("https://dummyjson.com/users/{$comment['user']['id']}?select=image")->json();
-            $comment['avatar'] = $avatar['image'];
+        // 1. CHAMA A API PARA OBTER O POST E DEMAIS DADOS
+        $apiPost = Http::get("https://dummyjson.com/posts/$id")->json();
+
+        // Se o post não for encontrado na API, retorna 404 (ou outra lógica de erro)
+        if (isset($apiPost['message']) && $apiPost['message'] === "Post with id $id not found") {
+            abort(404, 'Post não encontrado na API externa.');
         }
 
-        return view('post.show', compact('post', 'comments', 'user'));
+        $commentsResponse = Http::get("https://dummyjson.com/comments/post/$id")->json();
+        $apiComments = $commentsResponse['comments'] ?? [];
+        $apiUser = Http::get("https://dummyjson.com/users/{$apiPost['userId']}?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
+
+        // 2. SINCRONIZA USUÁRIO DO POST
+        User::updateOrCreate(
+            ['id' => $apiUser['id']],
+            [
+                'firstName' => $apiUser['firstName'] ?? null,
+                'lastName'  => $apiUser['lastName']  ?? null,
+                'email'     => $apiUser['email']     ?? null,
+                'phone'     => $apiUser['phone']     ?? null,
+                'image'     => $apiUser['image']     ?? null,
+                'birth_date'=> $apiUser['birthDate'] ?? null,
+                'address'   => json_encode($apiUser['address'] ?? null)
+            ]
+        );
+
+        // 3. SINCRONIZA POST NO DB LOCAL (Preserva likes/dislikes/views existentes)
+        $post = Post::updateOrCreate(
+            ['id' => $apiPost['id']],
+            [
+                'title'   => $apiPost['title'],
+                'body'    => $apiPost['body'],
+                'tags'    => $apiPost['tags'],
+                'user_id' => $apiPost['userId'],
+            ]
+        );
+
+        // Se o post foi criado pela primeira vez, usa os dados de views/likes/dislikes da API
+        if ($post->wasRecentlyCreated) {
+            $post->likes    = $apiPost['reactions']['likes'] ?? 0;
+            $post->dislikes = $apiPost['reactions']['dislikes'] ?? 0;
+            $post->views    = $apiPost['views'] ?? 0;
+            $post->save();
+        }
+
+        // 4. INCREMENTA AS VIEWS (apenas se não tiver contado views nesta sessão)
+        $sessionViewKey = "post_viewed_$id";
+        if (!session($sessionViewKey)) {
+            // Incrementa as views no DB local
+            $post->increment('views');
+            // Marca o post como visto na sessão para evitar múltiplos increments
+            session([$sessionViewKey => true]); 
+        }
+
+        // 5. SINCRONIZA COMENTÁRIOS E SEUS USUÁRIOS
+        foreach ($apiComments as $c) {
+            // Sincroniza Usuário do Comentário
+            $commentUser = Http::get("https://dummyjson.com/users/{$c['user']['id']}?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
+
+            User::updateOrCreate(
+                ['id' => $commentUser['id']],
+                [
+                    'firstName' => $commentUser['firstName'] ?? null,
+                    'lastName'  => $commentUser['lastName']  ?? null,
+                    'email'     => $commentUser['email']     ?? null,
+                    'phone'     => $commentUser['phone']     ?? null,
+                    'image'     => $commentUser['image']     ?? null,
+                    'birth_date'=> $commentUser['birthDate'] ?? null,
+                    'address'   => json_encode($commentUser['address'] ?? null)
+                ]
+            );
+
+            // Sincroniza Comentário
+            Comment::updateOrCreate(
+                ['id' => $c['id']], 
+                [
+                    'body'    => $c['body'],
+                    'likes'   => $c['likes'] ?? 0,
+                    'post_id' => $post->id, 
+                    'user_id' => $c['user']['id'],
+                ]
+            );
+        }
+
+        // 6. RECUPERA DADOS PARA A VIEW (incluindo likes/dislikes/views atualizados do DB local)
+        // Recarrega o post e seus comentários com relacionamentos
+        $post = Post::with(['user', 'comments.user'])->findOrFail($id);
+        
+        // Prepara os dados do comentário para a view. 
+        // Os comentários agora vêm do DB local, garantindo que o relacionamento `user` está carregado.
+        $commentsForView = $post->comments;
+
+        // O objeto 'user' para a view é o usuário do post (relation 'user' no $post)
+        $userForView = $post->user; 
+        
+        // Passa o $post atualizado do DB local
+        return view('post.show', [
+            'post' => $post, 
+            'comments' => $commentsForView, 
+            'user' => $userForView
+        ]);
     }
 
      public function like($id)
