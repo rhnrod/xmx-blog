@@ -9,7 +9,7 @@ use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Pagination\LengthAwarePaginator;
-
+// Removido: use Illuminate\Support\Facades\DB; // Não está sendo usado nesta lógica
 
 class PostController extends Controller
 {
@@ -49,8 +49,8 @@ class PostController extends Controller
         }
 
         // 1. PRIMEIRA CHAMADA À API
-        // Esta chamada ainda é necessária para sincronizar os dados paginados/iniciais ou o resultado da busca de texto.
-        $response = Http::get($url, $queryParams)->json();
+        // Adicionando timeout de 60 segundos para evitar a falha cURL 28
+        $response = Http::timeout(60)->get($url, $queryParams)->json();
         
         $postsFromApi = $response['posts'] ?? [];
         $totalApi = $response['total'] ?? 0;
@@ -63,7 +63,8 @@ class PostController extends Controller
             $nextSkip = $skip + $currentPostCount;
 
             // Segunda chamada para buscar a diferença
-            $secondResponse = Http::get($url, [
+            // Adicionando timeout de 60 segundos
+            $secondResponse = Http::timeout(60)->get($url, [
                 'q'     => $search,
                 'limit' => $needed,
                 'skip'  => $nextSkip,
@@ -86,7 +87,8 @@ class PostController extends Controller
                 $localUser = User::find($p['userId']);
 
                 if (!$localUser || !$localUser->firstName) {
-                    $apiUser = Http::get("https://dummyjson.com/users/{$p['userId']}")->json();
+                    // Adicionando timeout de 60 segundos
+                    $apiUser = Http::timeout(60)->get("https://dummyjson.com/users/{$p['userId']}")->json();
 
                     User::updateOrCreate(
                         ['id' => $apiUser['id']],
@@ -122,12 +124,14 @@ class PostController extends Controller
 
                 // 3.3. Sincroniza Comentários (apenas se o post foi criado/atualizado com sucesso)
                 if ($post && $post->id) { // Verificação de segurança adicional
-                    $comments = Http::get("https://dummyjson.com/comments/post/{$p['id']}")->json()['comments'] ?? [];
+                    // Adicionando timeout de 60 segundos
+                    $comments = Http::timeout(60)->get("https://dummyjson.com/comments/post/{$p['id']}")->json()['comments'] ?? [];
 
                     foreach ($comments as $c) {
 
                         // Sincroniza Usuário do Comentário
-                        $commentUser = Http::get("https://dummyjson.com/users/{$c['user']['id']}")->json();
+                        // Adicionando timeout de 60 segundos
+                        $commentUser = Http::timeout(60)->get("https://dummyjson.com/users/{$c['user']['id']}")->json();
 
                         User::updateOrCreate(
                             ['id' => $commentUser['id']],
@@ -244,16 +248,20 @@ class PostController extends Controller
     public function showPost($id)
     {
         // 1. CHAMA A API PARA OBTER O POST E DEMAIS DADOS
-        $apiPost = Http::get("https://dummyjson.com/posts/$id")->json();
+        // Adicionando timeout de 60 segundos
+        $apiPost = Http::timeout(60)->get("https://dummyjson.com/posts/$id")->json();
 
         // Se o post não for encontrado na API, retorna 404 (ou outra lógica de erro)
         if (isset($apiPost['message']) && $apiPost['message'] === "Post with id $id not found") {
             abort(404, 'Post não encontrado na API externa.');
         }
 
-        $commentsResponse = Http::get("https://dummyjson.com/comments/post/$id")->json();
+        // Adicionando timeout de 60 segundos
+        $commentsResponse = Http::timeout(60)->get("https://dummyjson.com/comments/post/$id")->json();
         $apiComments = $commentsResponse['comments'] ?? [];
-        $apiUser = Http::get("https://dummyjson.com/users/{$apiPost['userId']}?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
+        
+        // Adicionando timeout de 60 segundos
+        $apiUser = Http::timeout(60)->get("https://dummyjson.com/users/{$apiPost['userId']}?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
 
         // 2. SINCRONIZA USUÁRIO DO POST
         User::updateOrCreate(
@@ -300,7 +308,8 @@ class PostController extends Controller
         // 5. SINCRONIZA COMENTÁRIOS E SEUS USUÁRIOS
         foreach ($apiComments as $c) {
             // Sincroniza Usuário do Comentário
-            $commentUser = Http::get("https://dummyjson.com/users/{$c['user']['id']}?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
+            // Adicionando timeout de 60 segundos
+            $commentUser = Http::timeout(60)->get("https://dummyjson.com/users/{$c['user']['id']}?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
 
             User::updateOrCreate(
                 ['id' => $commentUser['id']],
@@ -346,7 +355,7 @@ class PostController extends Controller
         ]);
     }
 
-     public function like($id)
+    public function like($id)
     {
         $post = Post::findOrFail($id);
         $sessionKey = "post_vote_$id";
