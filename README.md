@@ -1,4 +1,4 @@
-# XMX Blog
+# XMX Blog 🗨️
 
 ## Descrição
 
