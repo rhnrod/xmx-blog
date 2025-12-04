@@ -12,65 +12,109 @@ class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * @param int $id O ID do usuário.
+     * @return \Illuminate\View\View
      */
-   public function index($id)
+    public function index($id)
     {
-        $page  = request()->get('page', 1);
-        $limit = 1;
-        $skip  = ($page - 1) * $limit;
+        // 1. Capturar parâmetros de busca e filtro
+        $search = request()->get('search');
+        $tagFilter = request()->get('tag');
+        // Padroniza o valor da tag para a busca local (minúsculas e sem espaços)
+        $tagValue = $tagFilter ? strtolower(trim($tagFilter)) : null; 
 
-        // 1) Buscar/ criar usuário
+        $page = request()->get('page', 1);
+        $limit = 10;
+        $skip = ($page - 1) * $limit;
+
+        // 2. Buscar/ criar usuário
         $user = User::find($id) ?? User::create(Http::get("https://dummyjson.com/users/$id")->json());
 
-        // 2) Pegar total da API (chamada leve) — garante que $totalApi exista sempre
-        $apiMeta = Http::get("https://dummyjson.com/users/$id/posts", [
-            'limit' => 1,
-            'skip'  => 0
-        ])->json();
-
-        $totalApi = $apiMeta['total'] ?? Post::where('user_id', $id)->count();
-
-        // 3) Só popular o DB se não houver posts locais
-        if (! $user->posts()->exists()) {
-            $api = Http::get("https://dummyjson.com/users/$id/posts", [
-                'limit' => $limit,
-                'skip'  => $skip
-            ])->json();
+        /** 3) Sincronização: Buscar todos os posts da API apenas 1 vez e salvar para referência futura */
+        // Isso garante que a busca por tag e o contador funcionem corretamente no local.
+        if (!$user->posts()->exists()) {
+            // Busca um limite alto (200) para cobrir a maioria dos casos
+            $api = Http::get("https://dummyjson.com/users/$id/posts?limit=200")->json();
 
             foreach ($api['posts'] as $post) {
                 Post::updateOrCreate(
                     ['id' => $post['id']],
                     [
-                        'title'    => $post['title'],
-                        'body'     => $post['body'],
-                        'tags'     => $post['tags'] ?? [],
-                        'likes'    => $post['reactions']['likes'] ?? $post['likes'] ?? 0,
-                        'dislikes' => $post['reactions']['dislikes'] ?? $post['dislikes'] ?? 0,
-                        'views'    => $post['views'] ?? 0,
-                        'user_id'  => $id
+                        'title'     => $post['title'],
+                        'body'      => $post['body'],
+                        // As tags são salvas como JSON no DB
+                        'tags'      => $post['tags'] ?? [], 
+                        'likes'     => $post['reactions']['likes'] ?? $post['likes'] ?? 0,
+                        'dislikes'  => $post['reactions']['dislikes'] ?? $post['dislikes'] ?? 0,
+                        'views'     => $post['views'] ?? 0,
+                        'user_id'   => $id
                     ]
                 );
             }
         }
 
-        // 4) Buscar do banco agora com paginação
-        $postsDB = Post::where('user_id', $id)
+        // 4. Construção da Consulta ao Banco de Dados (com filtros)
+        $postsQuery = Post::where('user_id', $id);
+
+        if ($tagFilter) {
+            // Filtragem por tag: usa whereJsonContains para buscar no array 'tags'
+            $postsQuery->whereJsonContains('tags', $tagValue);
+        } elseif ($search) {
+            // Busca de texto local (em title e body)
+            $postsQuery->where(function ($query) use ($search) {
+                $query->where('title', 'like', "%$search%")
+                      ->orWhere('body', 'like', "%$search%");
+            });
+        }
+        
+        // 5. Contagem Total após Filtros
+        // Usa o count do Query Builder após a aplicação dos filtros (se houver)
+        $totalDB = $postsQuery->count(); 
+
+        // 6. Buscar os posts com paginação
+        $postsDB = $postsQuery
             ->skip($skip)
             ->take($limit)
+            // Se não houver busca, ordena por id (assumindo que posts são ordenados por id na API)
+            ->orderBy('id', 'asc') 
             ->get();
 
-        // 5) Criar paginator usando o total da API (ou fallback)
+        /** 7. Cálculo das Categorias (TAGS) */
+        // Puxa todos os posts *deste usuário* (sem filtros) para obter a contagem completa das tags.
+        $allUserPosts = Post::where('user_id', $id)->get();
+        $tagCounts = [];
+
+        foreach ($allUserPosts as $post) {
+            // Assumindo que o model Post tem casting para array no campo 'tags'
+            $tags = $post->tags; 
+
+            if (is_array($tags)) {
+                foreach ($tags as $tag) {
+                    $tag = strtolower(trim($tag));
+                    $tagCounts[$tag] = ($tagCounts[$tag] ?? 0) + 1;
+                }
+            }
+        }
+        
+        ksort($tagCounts); // Ordena as tags por nome
+
+        /** 8. Criar paginator */
         $paginator = new LengthAwarePaginator(
             $postsDB,
-            $totalApi,
+            $totalDB, // Total já reflete os filtros (se aplicados)
             $limit,
             $page,
+            // Mantém os parâmetros 'search' e 'tag' na URL de paginação
             ['path' => url("/user/$id/posts"), 'query' => request()->query()]
         );
 
+        // 9. Retornar a view com todos os dados necessários
         return view('user.index', [
             'posts' => $paginator,
             'user'  => $user,
+            'search' => $search,
+            'tagCounts' => $tagCounts,
+            'tagFilter' => $tagFilter,
         ]);
     }
 
@@ -95,24 +139,9 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        /** Buscar dados do usuário */
-        $user = Http::get("https://dummyjson.com/users/$id?select=id,firstName,lastName,email,phone,image,birthDate,address")
-                    ->json();
+        $users = Http::get("https://dummyjson.com/users/$id?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
 
-        /** Buscar TODOS os posts desse usuário */
-        $postsResponse = Http::get("https://dummyjson.com/posts/user/$id")->json();
-
-        /** Total de posts */
-        $totalPosts = $postsResponse['total'] ?? 0;
-
-        /** Últimos 5 posts */
-        $latestPosts = collect($postsResponse['posts'])->sortByDesc('id')->take(5);
-
-        return view('user.show', [
-            'user'        => $user,
-            'posts'       => $latestPosts,   // usados no card
-            'totalPosts'  => $totalPosts,    // para exibir no título
-        ]);
+        return view('user.show', ['user' => $users]);
     }
 
     /**

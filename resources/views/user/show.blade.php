@@ -60,7 +60,7 @@
                             </div>
 
                             @if(isset($posts) && count($posts) > 0)
-                                <div class="bg-green-50 dark:bg-gray-400 p-6 md:p-8 rounded-2xl shadow-xl border border-gray-50 dark:border-gray-700 mt-8">
+                                <div class="bg-slate-300 dark:bg-gray-400 p-6 md:p-8 rounded-2xl shadow-xl border border-gray-50 dark:border-gray-700 mt-8">
 
                                     <h2 class="text-2xl font-bold text-gray-900 border-b pb-3 mb-5">
                                         Posts do Usuário ({{ $totalPosts }})
