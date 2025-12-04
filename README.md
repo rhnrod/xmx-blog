@@ -31,24 +31,24 @@ Frontend (Blade & Tailwind CSS): A apresentação é construída com templates B
 
 1. Clone o repositório
 ```sh
-   git clone github.com/rhnrod/xmx-blog
-   cd xmx-blog
+git clone github.com/rhnrod/xmx-blog
+cd xmx-blog
 ```
 
 2. Instale as dependências PHP
 ```sh
-   composer install
+composer install
 ```
 3. Configure o banco de dados
 ```sh
-   cp .env.example .env
-    php artisan key:generate
+cp .env.example .env
+php artisan key:generate
 ```
 4. Execute as migrations
 ```sh
-    php artisan migrate
+php artisan migrate
 ```
 5. Rode o projeto
 ```sh
-    php artisan serve
+composer run dev
 ```
