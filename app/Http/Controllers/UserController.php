@@ -137,12 +137,29 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
-    {
-        $users = Http::get("https://dummyjson.com/users/$id?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
+public function show(string $id)
+{
+    // 1. Buscar detalhes do usuário
+    $userResponse = Http::get("https://dummyjson.com/users/$id?select=id,firstName,lastName,email,phone,image,birthDate,address")->json();
 
-        return view('user.show', ['user' => $users]);
-    }
+    // 2. Buscar posts do usuário (Apenas os primeiros 5)
+    // Usamos a API diretamente para manter a simplicidade na tela de visualização
+    $postsResponse = Http::get("https://dummyjson.com/users/$id/posts?limit=5")->json();
+    
+    // Total de posts (para o cabeçalho "Posts do Usuário (Total)")
+    $totalPosts = $postsResponse['total'] ?? 0;
+    
+    // Os posts limitados
+    $limitedPosts = $postsResponse['posts'] ?? [];
+    
+    // 3. Retornar a view com 'user', 'posts' e 'totalPosts'
+    return view('user.show', [
+        'user' => $userResponse,
+        // Passa a lista limitada de posts (não o paginator, apenas o array de posts)
+        'posts' => $limitedPosts, 
+        'totalPosts' => $totalPosts,
+    ]);
+}
 
     /**
      * Show the form for editing the specified resource.

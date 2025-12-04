@@ -69,32 +69,22 @@
                             </div>
 
                             <!-- Posts do Usuário (Bloco Aninhado) -->
-                            @if(isset($posts) && count($posts) > 0)
-                                <!-- Adiciona bg-white para contraste com o card pai (bg-gray-800) em dark mode -->
+                            @if(isset($posts) && $totalPosts > 0)
                                 <div class="bg-slate-300 dark:bg-gray-700 p-6 md:p-8 rounded-2xl shadow-inner border border-gray-300 dark:border-gray-600 mt-8">
-
                                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white border-b border-gray-300 dark:border-gray-600 pb-3 mb-5">
-                                        Posts do Usuário ({{ $totalPosts }})
+                                        Posts do Usuário ({{ $totalPosts }}) 
                                     </h2>
 
-                                    <ul class="space-y-3">
-                                        @foreach($posts->take(5) as $post)
+                                        <ul class="space-y-3">
+                                            @foreach($posts as $post) 
                                             <li>
                                                 <a href="{{ route('post.show', ['id' => $post['id']]) }}"
                                                     class="text-indigo-600 hover:underline text-lg font-medium dark:text-indigo-400 dark:hover:text-indigo-300">
                                                     {{ $post['title'] }}
                                                 </a>
                                             </li>
-                                        @endforeach
-                                    </ul>
-
-                                    <div class="mt-5 text-right">
-                                        <a href="{{ route('user.index', ['id' => $user['id']]) }}"
-                                        class="text-gray-600 hover:text-gray-800 font-semibold dark:text-gray-400 dark:hover:text-gray-200">
-                                            Ver todos os posts →
-                                        </a>
-                                    </div>
-
+                                            @endforeach
+                                        </ul>
                                 </div>
                             @else
                                 <div class="mt-8 p-4 bg-yellow-100 dark:bg-yellow-800 rounded-lg">
